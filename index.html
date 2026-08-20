@@ -3,63 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlayZone - Telegram Mini App</title>
+    <title>PlayZone - كرة الفليك</title>
     <link rel="stylesheet" href="style.css">
-    <!-- مكتبة Socket.io Client -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <!-- شريط الرأس -->
-        <header class="app-header">
-            <h1 class="logo">🎮 PlayZone</h1>
-            <div id="connection-status" class="status-badge offline">غير متصل</div>
-        </header>
+        <!-- 1. الشاشة الرئيسية -->
+        <section id="sec-home" class="view-section active">
+            <header class="game-header">
+                <div class="brand">
+                    <h2>كرة الفليك</h2>
+                    <span>FLICK SOCCER</span>
+                </div>
+            </header>
 
-        <!-- كارت بيانات المستخدم -->
-        <section class="user-card">
-            <div class="user-info">
-                <span class="label">معرف المستخدم (ID):</span>
-                <span id="user-id-display" class="value">جاري التحميل...</span>
+            <div class="profile-card">
+                <div class="avatar" id="user-avatar">R</div>
+                <div class="profile-details">
+                    <h3 id="user-name">..R</h3>
+                    <div class="points-badge">
+                        <span id="user-points">25</span> 🟡 نقطة
+                    </div>
+                </div>
             </div>
-            <div class="user-info">
-                <span class="label">نقاطك:</span>
-                <span id="user-score" class="score-value">0</span>
+
+            <div class="action-buttons">
+                <button class="btn btn-play" id="btn-quick-play">
+                    ⚡ لعب سريع
+                </button>
+                <button class="btn btn-practice" id="btn-practice">
+                    🎯 تدريب
+                </button>
+            </div>
+
+            <div class="grid-menu">
+                <div class="grid-card" id="card-challenges">
+                    <span class="badge-new">جديد 🔥</span>
+                    <div class="icon">⚔️</div>
+                    <h4>التحديات المتاحة</h4>
+                </div>
+                <div class="grid-card" onclick="switchTab('sec-store')">
+                    <div class="icon">🎁</div>
+                    <h4>المتجر</h4>
+                </div>
+                <div class="grid-card" onclick="switchTab('sec-leaderboard')">
+                    <div class="icon">🏅</div>
+                    <h4>المتصدرون</h4>
+                </div>
+                <div class="grid-card wide">
+                    <div class="icon">👁️</div>
+                    <h4>مشاهدة المباريات</h4>
+                </div>
             </div>
         </section>
 
-        <!-- تنبيهات الحظر/الأخطاء -->
-        <div id="error-alert" class="alert-box hidden"></div>
+        <!-- 2. ملعب اللعبة (تظهر عند اللعب/التدريب) -->
+        <section id="sec-game" class="view-section">
+            <div class="game-top-bar">
+                <button class="btn-back" onclick="switchTab('sec-home')">❮</button>
+                <span class="game-mode-title" id="game-mode-txt">تدريب</span>
+                <div class="game-score"><span id="score-val">0 / 5</span> ⚽</div>
+            </div>
+            
+            <div class="pitch-container">
+                <div class="pitch-line center-circle"></div>
+                <div class="pitch-line penalty-area top"></div>
+                <div class="pitch-line penalty-area bottom"></div>
+                <div class="goal-net top-goal"></div>
+                <div class="goal-net bottom-goal"></div>
 
-        <!-- قائمة الغرف واللعب -->
-        <main class="main-content">
-            <div class="room-card">
-                <h2>غرفة التحدي أونلاين</h2>
-                <p class="description">انضم للغرفة للعب والمالحة، مدة كل دور 15 ثانية.</p>
-                
-                <div class="input-group">
-                    <input type="text" id="room-id-input" placeholder="أدخل رقم الغرفة (مثال: 101)" autocomplete="off">
-                    <button id="join-room-btn" class="btn btn-primary">دخول الغرفة</button>
+                <!-- كرة ولعب -->
+                <div id="ball" class="soccer-ball"></div>
+                <div id="player-ring" class="neon-ring"></div>
+            </div>
+        </section>
+
+        <!-- 3. المتصدرون -->
+        <section id="sec-leaderboard" class="view-section">
+            <h2 class="section-title">المتصدرون</h2>
+            <div class="weekly-banner">
+                <h4>التحدي الأسبوعي 🏆</h4>
+                <p>أفضل 3 لاعبين يحصلون على مكافأة إضافية!</p>
+            </div>
+            <div class="leaderboard-list">
+                <div class="rank-card gold">
+                    <span class="rank">1</span>
+                    <div class="rank-avatar">T</div>
+                    <div class="rank-info"><strong>Turki</strong> <span>Lv.70</span></div>
+                    <span class="rank-points">91,840 🟡</span>
+                </div>
+                <div class="rank-card">
+                    <span class="rank">2</span>
+                    <div class="rank-avatar">D</div>
+                    <div class="rank-info"><strong>d</strong> <span>Lv.41</span></div>
+                    <span class="rank-points">74,240 🟡</span>
                 </div>
             </div>
+        </section>
 
-            <!-- ساحة اللعب بعد الانضمام -->
-            <div id="game-arena" class="arena-card hidden">
-                <div class="arena-header">
-                    <span id="current-room-display">الغرفة: -</span>
-                    <div class="timer-box">الوقت المتبقي: <span id="timer">15</span>s</div>
-                </div>
-                <div class="arena-body">
-                    <p id="game-status-text">انتظار اللاعب الآخر...</p>
-                    <button id="action-btn" class="btn btn-success" disabled>تسجيل حركة</button>
-                </div>
+        <!-- 4. المتجر -->
+        <section id="sec-store" class="view-section">
+            <h2 class="section-title">المتجر</h2>
+            <div class="store-item active-item">
+                <div class="store-tag">مجانية</div>
+                <div class="skin-icons">🧤 🟢 ⚽</div>
+                <h4>الباقة الكلاسيكية</h4>
+                <button class="btn-active">مفعلة الآن ✅</button>
             </div>
-        </main>
+            <div class="store-item legend-item">
+                <div class="store-tag legend">حصري ⭐</div>
+                <div class="skin-icons">🌟 🔴 ⚽</div>
+                <h4>باقة النجم الأسطوري</h4>
+                <button class="btn-buy">20,000 نقطة</button>
+            </div>
+        </section>
+
+        <!-- 5. الملف الشخصي -->
+        <section id="sec-profile" class="view-section">
+            <h2 class="section-title">ملفي</h2>
+            <div class="profile-card big">
+                <div class="avatar big-avatar" id="p-avatar">R</div>
+                <h3 id="p-name">..R</h3>
+                <span class="level">المستوى 2 ⭐</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-box">🏆 1 <span>فوز</span></div>
+                <div class="stat-box">❌ 4 <span>خسارة</span></div>
+                <div class="stat-box">🤝 0 <span>تعادل</span></div>
+                <div class="stat-box">⚽ 13 <span>الأهداف</span></div>
+                <div class="stat-box">📊 20% <span>نسبة الفوز</span></div>
+                <div class="stat-box">💰 480 <span>الأرباح</span></div>
+            </div>
+        </section>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="switchTab('sec-home')">
+                <i>🏠</i><span>الرئيسية</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('sec-leaderboard')">
+                <i>📊</i><span>الترتيب</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('sec-store')">
+                <i>🎁</i><span>المتجر</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('sec-profile')">
+                <i>👤</i><span>ملفي</span>
+            </button>
+        </nav>
     </div>
 
     <script src="script.js"></script>
-    <footer style="text-align: center; margin-top: 20px; font-size: 0.7rem;">
-    <a href="privacy.html" style="color: #94a3b8; text-decoration: none;">سياسة الخصوصية</a>
-</footer>
 </body>
 </html>
