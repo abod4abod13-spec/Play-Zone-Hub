@@ -3,158 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlayZone - كرة الفليك</title>
+    <title>Play & Earn - Mini App</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="app-container">
-        <!-- 1. الشاشة الرئيسية -->
+        
+        <!-- 1. الرئيسية -->
         <section id="sec-home" class="view-section active">
             <header class="game-header">
                 <div class="brand">
-                    <h2>كرة الفليك</h2>
-                    <span>FLICK SOCCER</span>
+                    <h2>PLAY & EARN</h2>
+                    <span>منصة الألعاب والتحديات</span>
                 </div>
+                <button class="btn-daily" id="btn-daily-reward">🎁 هدية يومية</button>
             </header>
 
             <div class="profile-card">
-                <div class="avatar" id="user-avatar">R</div>
+                <div class="avatar" id="u-avatar">U</div>
                 <div class="profile-details">
-                    <h3 id="user-name">..R</h3>
-                    <div class="points-badge">
-                        <span id="user-points">25</span> 🟡 نقطة
+                    <h3 id="u-name">جاري التحميل...</h3>
+                    <div class="points-badge"><span id="u-points">0</span> 🟡 نقطة</div>
+                </div>
+            </div>
+
+            <!-- تبويب الألعاب -->
+            <div class="section-title-bar">🎮 الألعاب والرهانات</div>
+            <div class="games-grid">
+                <div class="game-card" onclick="openBetModal('xo')">
+                    <div class="game-icon">❌⭕</div>
+                    <h4>لعبة XO</h4>
+                    <span>تحدي أونلاين</span>
+                </div>
+                <div class="game-card" onclick="openBetModal('rps')">
+                    <div class="game-icon">✂️📜🪨</div>
+                    <h4>حجرة ورقة مقص</h4>
+                    <span>تحدي أونلاين</span>
+                </div>
+                <div class="game-card" onclick="openBetModal('soccer')">
+                    <div class="game-icon">⚽</div>
+                    <h4>كرة القدم (فليك)</h4>
+                    <span>5 أهداف - 15ث</span>
+                </div>
+            </div>
+
+            <!-- المهام والإعلانات -->
+            <div class="section-title-bar">📋 المهام والجوائز</div>
+            <div class="tasks-list">
+                <div class="task-item">
+                    <div class="task-info">
+                        <strong>الاشتراك في القناة</strong>
+                        <small>+500 نقطة</small>
                     </div>
+                    <button class="btn-task" onclick="completeTask(this, 500)">تنفيذ</button>
                 </div>
-            </div>
-
-            <div class="action-buttons">
-                <button class="btn btn-play" id="btn-quick-play">
-                    ⚡ لعب سريع
-                </button>
-                <button class="btn btn-practice" id="btn-practice">
-                    🎯 تدريب
-                </button>
-            </div>
-
-            <div class="grid-menu">
-                <div class="grid-card" id="card-challenges">
-                    <span class="badge-new">جديد 🔥</span>
-                    <div class="icon">⚔️</div>
-                    <h4>التحديات المتاحة</h4>
-                </div>
-                <div class="grid-card" onclick="switchTab('sec-store')">
-                    <div class="icon">🎁</div>
-                    <h4>المتجر</h4>
-                </div>
-                <div class="grid-card" onclick="switchTab('sec-leaderboard')">
-                    <div class="icon">🏅</div>
-                    <h4>المتصدرون</h4>
-                </div>
-                <div class="grid-card wide">
-                    <div class="icon">👁️</div>
-                    <h4>مشاهدة المباريات</h4>
+                <div class="task-item">
+                    <div class="task-info">
+                        <strong>مشاهدة إعلان سريع</strong>
+                        <small>+200 نقطة</small>
+                    </div>
+                    <button class="btn-task" onclick="completeTask(this, 200)">مشاهدة 👁️</button>
                 </div>
             </div>
         </section>
 
-        <!-- 2. ملعب اللعبة (تظهر عند اللعب/التدريب) -->
+        <!-- 2. شاشة خيارات الرهان والغرف -->
+        <section id="sec-bet" class="view-section">
+            <button class="btn-back" onclick="switchTab('sec-home')">❯ رجوع</button>
+            <h2 class="section-title" id="selected-game-title">اختر الرهان</h2>
+            
+            <div class="bet-selector">
+                <p>اختر قيمة الرهان بالنظام:</p>
+                <div class="bet-options">
+                    <button class="btn-bet" onclick="selectBet(100)">100 🟡 (الربح 200)</button>
+                    <button class="btn-bet" onclick="selectBet(500)">500 🟡 (الربح 1,000)</button>
+                    <button class="btn-bet" onclick="selectBet(1000)">1,000 🟡 (الربح 2,000)</button>
+                    <button class="btn-bet" onclick="selectBet(50000)">50,000 🟡 (الربح 100,000)</button>
+                </div>
+            </div>
+
+            <div class="room-controls">
+                <button class="btn btn-play" onclick="startMatchmaking()">⚡ البحث عن منافس تلقائي</button>
+            </div>
+        </section>
+
+        <!-- 3. شاشة اللعب الأونلاين -->
         <section id="sec-game" class="view-section">
             <div class="game-top-bar">
-                <button class="btn-back" onclick="switchTab('sec-home')">❮</button>
-                <span class="game-mode-title" id="game-mode-txt">تدريب</span>
-                <div class="game-score"><span id="score-val">0 / 5</span> ⚽</div>
+                <span id="player-1-name">أنت</span>
+                <div class="timer-box">⏳ <span id="game-timer">15</span>ث</div>
+                <span id="player-2-name">المنافس</span>
             </div>
-            
-            <div class="pitch-container">
-                <div class="pitch-line center-circle"></div>
-                <div class="pitch-line penalty-area top"></div>
-                <div class="pitch-line penalty-area bottom"></div>
-                <div class="goal-net top-goal"></div>
-                <div class="goal-net bottom-goal"></div>
 
-                <!-- كرة ولعب -->
-                <div id="ball" class="soccer-ball"></div>
-                <div id="player-ring" class="neon-ring"></div>
+            <!-- منطقة اللعب الديناميكية -->
+            <div id="game-arena" class="arena-container">
+                <!-- يتم حقن واجهة اللعبة بواسطة JS حسب اللعبة المختارة -->
             </div>
         </section>
 
-        <!-- 3. المتصدرون -->
+        <!-- 4. الإحالات -->
+        <section id="sec-referral" class="view-section">
+            <h2 class="section-title">دعوة الأصدقاء 👥</h2>
+            <div class="referral-box">
+                <p>احصل على 1,000 نقطة عن كل صديق يدخل عن طريقك!</p>
+                <div class="ref-link-container">
+                    <input type="text" id="ref-link" readonly value="https://t.me/YourBot?start=ref123">
+                    <button onclick="copyRef()">نسخ</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. المتصدرون -->
         <section id="sec-leaderboard" class="view-section">
-            <h2 class="section-title">المتصدرون</h2>
-            <div class="weekly-banner">
-                <h4>التحدي الأسبوعي 🏆</h4>
-                <p>أفضل 3 لاعبين يحصلون على مكافأة إضافية!</p>
-            </div>
-            <div class="leaderboard-list">
-                <div class="rank-card gold">
-                    <span class="rank">1</span>
-                    <div class="rank-avatar">T</div>
-                    <div class="rank-info"><strong>Turki</strong> <span>Lv.70</span></div>
-                    <span class="rank-points">91,840 🟡</span>
-                </div>
-                <div class="rank-card">
-                    <span class="rank">2</span>
-                    <div class="rank-avatar">D</div>
-                    <div class="rank-info"><strong>d</strong> <span>Lv.41</span></div>
-                    <span class="rank-points">74,240 🟡</span>
-                </div>
+            <h2 class="section-title">أفضل اللاعبين 🏆</h2>
+            <div class="leaderboard-list" id="leaderboard-data">
+                <!-- يتم جلب المتصدرين ديناميكياً -->
             </div>
         </section>
 
-        <!-- 4. المتجر -->
-        <section id="sec-store" class="view-section">
-            <h2 class="section-title">المتجر</h2>
-            <div class="store-item active-item">
-                <div class="store-tag">مجانية</div>
-                <div class="skin-icons">🧤 🟢 ⚽</div>
-                <h4>الباقة الكلاسيكية</h4>
-                <button class="btn-active">مفعلة الآن ✅</button>
-            </div>
-            <div class="store-item legend-item">
-                <div class="store-tag legend">حصري ⭐</div>
-                <div class="skin-icons">🌟 🔴 ⚽</div>
-                <h4>باقة النجم الأسطوري</h4>
-                <button class="btn-buy">20,000 نقطة</button>
-            </div>
-        </section>
-
-        <!-- 5. الملف الشخصي -->
-        <section id="sec-profile" class="view-section">
-            <h2 class="section-title">ملفي</h2>
-            <div class="profile-card big">
-                <div class="avatar big-avatar" id="p-avatar">R</div>
-                <h3 id="p-name">..R</h3>
-                <span class="level">المستوى 2 ⭐</span>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-box">🏆 1 <span>فوز</span></div>
-                <div class="stat-box">❌ 4 <span>خسارة</span></div>
-                <div class="stat-box">🤝 0 <span>تعادل</span></div>
-                <div class="stat-box">⚽ 13 <span>الأهداف</span></div>
-                <div class="stat-box">📊 20% <span>نسبة الفوز</span></div>
-                <div class="stat-box">💰 480 <span>الأرباح</span></div>
-            </div>
-        </section>
-
-        <!-- شريط التنقل السفلي -->
+        <!-- Navigation Bar -->
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="switchTab('sec-home')">
-                <i>🏠</i><span>الرئيسية</span>
-            </button>
-            <button class="nav-item" onclick="switchTab('sec-leaderboard')">
-                <i>📊</i><span>الترتيب</span>
-            </button>
-            <button class="nav-item" onclick="switchTab('sec-store')">
-                <i>🎁</i><span>المتجر</span>
-            </button>
-            <button class="nav-item" onclick="switchTab('sec-profile')">
-                <i>👤</i><span>ملفي</span>
-            </button>
+            <button class="nav-item active" onclick="switchTab('sec-home')"><i>🏠</i><span>الرئيسية</span></button>
+            <button class="nav-item" onclick="switchTab('sec-referral')"><i>👥</i><span>الإحالة</span></button>
+            <button class="nav-item" onclick="switchTab('sec-leaderboard')"><i>📊</i><span>المتصدرون</span></button>
         </nav>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
