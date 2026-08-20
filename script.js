@@ -1,38 +1,76 @@
-const SERVER_URL = "https://nodejs-project--abod4abod13.replit.app";
-const socket = io(SERVER_URL, { path: "/api/socket.io", transports: ["websocket", "polling"] });
+const SERVER_URL = "https://your-server-domain.com"; // رابط سيرفرك الحقيفي
+const socket = io(SERVER_URL);
 
-// Telegram WebApp
+let currentUser = { id: null, name: "زائر", points: 0 };
+let currentBet = 100;
+let currentGame = null;
+let turnTimer = null;
+
+// التهيئة من Telegram Mini App
 const tg = window.Telegram?.WebApp;
 if (tg) {
     tg.expand();
     if (tg.initDataUnsafe?.user) {
         const u = tg.initDataUnsafe.user;
-        document.getElementById("user-name").textContent = u.first_name;
-        document.getElementById("p-name").textContent = u.first_name;
-        document.getElementById("user-avatar").textContent = u.first_name[0];
-        document.getElementById("p-avatar").textContent = u.first_name[0];
+        currentUser.id = u.id;
+        currentUser.name = u.first_name;
+        document.getElementById("u-name").textContent = u.first_name;
+        document.getElementById("u-avatar").textContent = u.first_name[0];
+        
+        // تسجيل المستخدم في السيرفر وتمرير بياناته
+        socket.emit("register_user", { tgId: u.id, name: u.first_name, initData: tg.initData });
     }
 }
 
-// التنقل بين الشاشات
 function switchTab(tabId) {
-    document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
 }
 
-// أزرار بدء اللعب
-document.getElementById("btn-practice").addEventListener("click", () => {
-    document.getElementById("game-mode-txt").textContent = "تدريب";
+function openBetModal(gameType) {
+    currentGame = gameType;
+    document.getElementById("selected-game-title").textContent = `رهان لعبة: ${gameType.toUpperCase()}`;
+    switchTab("sec-bet");
+}
+
+function selectBet(amount) {
+    if (currentUser.points < amount) {
+        alert("عذراً! لا تمتلك نقاط كافية للعب هذا الرهان ❌");
+        return;
+    }
+    currentBet = amount;
+    alert(`تم اختيار رهان ${amount} نقطة ✅`);
+}
+
+function startMatchmaking() {
     switchTab("sec-game");
+    socket.emit("find_match", { userId: currentUser.id, game: currentGame, bet: currentBet });
+}
+
+// استقبال بدء اللعبة والمؤقت
+socket.on("match_start", (data) => {
+    document.getElementById("player-1-name").textContent = data.p1.name;
+    document.getElementById("player-2-name").textContent = data.p2.name;
+    start15SecTimer();
 });
 
-document.getElementById("btn-quick-play").addEventListener("click", () => {
-    document.getElementById("game-mode-txt").textContent = "لعب سريع اونلاين";
-    switchTab("sec-game");
-    socket.emit("join_room", { roomId: "global_1", userId: "user_" + Math.random() });
-});
+function start15SecTimer() {
+    let timeLeft = 15;
+    document.getElementById("game-timer").textContent = timeLeft;
+    clearInterval(turnTimer);
+    
+    turnTimer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("game-timer").textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(turnTimer);
+            socket.emit("turn_timeout"); // انتهاء الوقت وفقدان الدور
+        }
+    }, 1000);
+}
 
-// الاتصال بالسيرفر
-socket.on("connect", () => console.log("متصل بالسيرفر بنجاح!"));
+socket.on("update_user_data", (data) => {
+    currentUser.points = data.points;
+    document.getElementById("u-points").textContent = data.points;
+});
