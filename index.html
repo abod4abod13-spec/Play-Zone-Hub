@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlayZone - Telegram Mini App</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- مكتبة Socket.io Client -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- شريط الرأس -->
+        <header class="app-header">
+            <h1 class="logo">🎮 PlayZone</h1>
+            <div id="connection-status" class="status-badge offline">غير متصل</div>
+        </header>
+
+        <!-- كارت بيانات المستخدم -->
+        <section class="user-card">
+            <div class="user-info">
+                <span class="label">معرف المستخدم (ID):</span>
+                <span id="user-id-display" class="value">جاري التحميل...</span>
+            </div>
+            <div class="user-info">
+                <span class="label">نقاطك:</span>
+                <span id="user-score" class="score-value">0</span>
+            </div>
+        </section>
+
+        <!-- تنبيهات الحظر/الأخطاء -->
+        <div id="error-alert" class="alert-box hidden"></div>
+
+        <!-- قائمة الغرف واللعب -->
+        <main class="main-content">
+            <div class="room-card">
+                <h2>غرفة التحدي أونلاين</h2>
+                <p class="description">انضم للغرفة للعب والمالحة، مدة كل دور 15 ثانية.</p>
+                
+                <div class="input-group">
+                    <input type="text" id="room-id-input" placeholder="أدخل رقم الغرفة (مثال: 101)" autocomplete="off">
+                    <button id="join-room-btn" class="btn btn-primary">دخول الغرفة</button>
+                </div>
+            </div>
+
+            <!-- ساحة اللعب بعد الانضمام -->
+            <div id="game-arena" class="arena-card hidden">
+                <div class="arena-header">
+                    <span id="current-room-display">الغرفة: -</span>
+                    <div class="timer-box">الوقت المتبقي: <span id="timer">15</span>s</div>
+                </div>
+                <div class="arena-body">
+                    <p id="game-status-text">انتظار اللاعب الآخر...</p>
+                    <button id="action-btn" class="btn btn-success" disabled>تسجيل حركة</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
