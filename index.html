@@ -3,123 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlayZone Mini App</title>
+    <title>PlayZone Pro</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
     <div class="glow-orb orb-1"></div>
     <div class="glow-orb orb-2"></div>
 
     <div class="main-card">
+        <!-- مساحة إعلانية -->
+        <div class="ad-banner">
+            <span class="ad-badge">إعلان ممول</span>
+            <p>🌟 مساحة إعلانية - احصل على 10,000 نقطة عند التسجيل!</p>
+        </div>
+
         <!-- 1. الشاشة الرئيسية -->
         <section id="sec-home" class="stage active">
             <header class="app-header">
                 <div class="user-profile">
-                    <img id="u-photo" src="https://via.placeholder.com/50" alt="Avatar" class="profile-avatar">
+                    <img id="u-photo" src="https://via.placeholder.com/50" class="profile-avatar">
                     <div class="user-info">
                         <h3 id="u-name">جاري التحميل...</h3>
-                        <span id="u-username">@username</span>
+                        <span id="u-level">المستوى: 1 (0/100 XP)</span>
                     </div>
                 </div>
-                <div class="badge-points">
-                    🟡 <span id="u-points">1000</span>
-                </div>
+                <div class="badge-points">🟡 <span id="u-points">1000</span></div>
             </header>
 
-            <button class="btn-primary gift-btn" onclick="claimDailyReward()">🎁 استلام الهدايا اليومية</button>
+            <div class="action-buttons">
+                <button class="btn-secondary" onclick="claimDailyReward()">🎁 مكافأة يومية</button>
+                <button class="btn-secondary" onclick="showPromoModal()">🎟️ كود هدية</button>
+            </div>
 
-            <h3 class="section-title">🎮 أختر اللعبة</h3>
+            <h3 class="section-title">🎮 الألعاب المتاحة</h3>
             <div class="games-grid">
-                <div class="game-card" onclick="openGameModal('xo')">
-                    <div class="g-icon">❌⭕</div>
-                    <h4>لعبة XO</h4>
+                <div class="game-card" onclick="openGame('xo')">
+                    <div class="g-icon">❌⭕</div><h4>لعبة XO</h4>
                 </div>
-                <div class="game-card" onclick="openGameModal('rps')">
-                    <div class="g-icon">✂️📜🪨</div>
-                    <h4>حجرة ورقة مقص</h4>
+                <div class="game-card" onclick="openGame('rps')">
+                    <div class="g-icon">✂️📜</div><h4>حجرة ورقة مقص</h4>
                 </div>
-                <div class="game-card" onclick="openGameModal('soccer')">
-                    <div class="g-icon">⚽</div>
-                    <h4>كرة القدم</h4>
+                <div class="game-card" onclick="openGame('soccer')">
+                    <div class="g-icon">⚽</div><h4>ضربات الجزاء</h4>
                 </div>
             </div>
         </section>
 
-        <!-- 2. خيارات اللعب والرهان -->
-        <section id="sec-mode" class="stage">
-            <button class="btn-back" onclick="switchStage('sec-home')">❮ رجوع</button>
-            <h2 id="modal-game-title" class="target-name">اختر اللعبة</h2>
-            
-            <p class="age-label">حدد وضع اللعب:</p>
-            <div class="mode-buttons">
-                <button class="btn-primary" onclick="setMode('ai')">🤖 ضد الذكاء الاصطناعي</button>
-                <button class="btn-primary" onclick="setMode('online')">🌐 أونلاين ضد منافس</button>
-            </div>
-
-            <p class="age-label" style="margin-top:15px;">اختر الرهان (تتضاعف النقاط بالفوز):</p>
-            <div class="bet-grid">
-                <button class="btn-bet" onclick="selectBet(100)">100 🟡</button>
-                <button class="btn-bet" onclick="selectBet(500)">500 🟡</button>
-                <button class="btn-bet" onclick="selectBet(1000)">1,000 🟡</button>
-                <button class="btn-bet" onclick="selectBet(5000)">5,000 🟡</button>
-            </div>
-
-            <button class="btn-primary start-btn" onclick="startGame()">🚀 ابدأ اللعب الأن</button>
-        </section>
-
-        <!-- 3. ساحة اللعبة -->
+        <!-- 2. ساحة الألعاب الموحدة -->
         <section id="sec-game" class="stage">
             <div class="game-top-bar">
-                <button class="btn-back" onclick="switchStage('sec-home')">❮ إنهاء</button>
-                <div class="timer-box">⏳ <span id="game-timer">15</span>ث</div>
+                <button class="btn-back" onclick="switchStage('sec-home')">❮ خروج</button>
+                <div class="badge-points">الرهان: <span id="current-bet-display">100</span></div>
             </div>
-            <div id="game-board" class="board-area"></div>
+            
+            <div id="game-container" class="board-area">
+                <!-- يتم حقن اللعبة هنا عبر JS -->
+            </div>
         </section>
 
-        <!-- 4. المتجر -->
+        <!-- 3. المتجر -->
         <section id="sec-shop" class="stage">
-            <h2 class="target-name">🛍️ المتجر</h2>
+            <h2 class="target-name">🛍️ المتجر المظلم</h2>
             <div class="shop-list">
                 <div class="shop-item">
-                    <span>🔥 مضاعف النقاط (2x)</span>
-                    <button class="btn-primary" onclick="buyItem(2000)">2,000 🟡</button>
+                    <div><strong>🚀 مضاعف النقاط (ساعة)</strong><br><small>نقاط x2 في الألعاب</small></div>
+                    <button class="btn-primary" onclick="buyItem('double_xp', 2000)">2,000 🟡</button>
                 </div>
                 <div class="shop-item">
-                    <span>👑 شارة العضوية الذهبية</span>
-                    <button class="btn-primary" onclick="buyItem(10000)">10,000 🟡</button>
+                    <div><strong>👑 عضوية VIP</strong><br><small>إزالة الإعلانات + اسم ذهبي</small></div>
+                    <button class="btn-primary" onclick="buyItem('vip', 15000)">15,000 🟡</button>
                 </div>
             </div>
         </section>
 
-        <!-- 5. المهام -->
-        <section id="sec-tasks" class="stage">
-            <h2 class="target-name">📋 المهام اليومية</h2>
-            <div class="tasks-list">
-                <div class="task-item">
-                    <div>
-                        <strong>الاشتراك بقناة التلغرام</strong>
-                        <div class="age-label">+500 نقطة</div>
-                    </div>
-                    <button class="btn-primary" onclick="doTask(this, 500)">إنجاز</button>
-                </div>
-                <div class="task-item">
-                    <div>
-                        <strong>دعوة صديق جديد</strong>
-                        <div class="age-label">+1000 نقطة</div>
-                    </div>
-                    <button class="btn-primary" onclick="doTask(this, 1000)">إنجاز</button>
+        <!-- 4. المتصدرين (الرانك) -->
+        <section id="sec-leaderboard" class="stage">
+            <h2 class="target-name">🏆 أفضل اللاعبين</h2>
+            <div class="tasks-list" id="leaderboard-list">
+                <!-- يتم التوليد برمجياً -->
+            </div>
+        </section>
+
+        <!-- 5. الإعدادات -->
+        <section id="sec-settings" class="stage">
+            <h2 class="target-name">⚙️ الإعدادات</h2>
+            <div class="shop-list">
+                <div class="shop-item">
+                    <strong>🔊 المؤثرات الصوتية</strong>
+                    <button id="btn-sound" class="btn-secondary" onclick="toggleSound()">مفعل ✅</button>
                 </div>
             </div>
         </section>
 
-        <!-- Navigation Bar -->
+        <!-- شريط التنقل السفلي -->
         <nav class="bottom-nav">
-            <div class="nav-btn active" onclick="switchStage('sec-home')">🎮 الألعاب</div>
+            <div class="nav-btn active" onclick="switchStage('sec-home')">🎮 الرئيسية</div>
             <div class="nav-btn" onclick="switchStage('sec-shop')">🛍️ المتجر</div>
-            <div class="nav-btn" onclick="switchStage('sec-tasks')">📋 المهام</div>
+            <div class="nav-btn" onclick="switchStage('sec-leaderboard')">🏆 الرانك</div>
+            <div class="nav-btn" onclick="switchStage('sec-settings')">⚙️ إعدادات</div>
         </nav>
     </div>
 
