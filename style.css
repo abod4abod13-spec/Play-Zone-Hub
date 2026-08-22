@@ -1,51 +1,68 @@
 :root {
-    --bg-dark: #0a0a12;
+    --bg-dark: #07070a;
     --primary: #ff2a6d;
     --secondary: #05d9e8;
     --gold: #ffb703;
-    --card-bg: rgba(255, 255, 255, 0.05);
-    --border-color: rgba(255, 255, 255, 0.18);
+    --card-bg: rgba(20, 20, 30, 0.6);
+    --border-color: rgba(255, 255, 255, 0.1);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; user-select: none; }
-body { background-color: var(--bg-dark); min-height: 100vh; display: flex; justify-content: center; align-items: center; overflow-x: hidden; color: #ffffff; position: relative; }
+body { background-color: var(--bg-dark); min-height: 100vh; display: flex; justify-content: center; align-items: center; color: #fff; overflow-x: hidden; }
 
-.glow-orb { position: absolute; width: 300px; height: 300px; border-radius: 50%; filter: blur(120px); z-index: 0; opacity: 0.6; }
-.orb-1 { background: var(--primary); top: 10%; left: 15%; }
-.orb-2 { background: var(--secondary); bottom: 10%; right: 15%; }
+/* تأثيرات الخلفية */
+.glow-orb { position: absolute; width: 250px; height: 250px; border-radius: 50%; filter: blur(100px); opacity: 0.4; z-index: -1; animation: float 6s infinite alternate; }
+.orb-1 { background: var(--primary); top: 5%; left: 5%; }
+.orb-2 { background: var(--secondary); bottom: 5%; right: 5%; }
+@keyframes float { 0% { transform: translateY(0); } 100% { transform: translateY(30px); } }
 
-.main-card { position: relative; z-index: 10; width: 95%; max-width: 440px; min-height: 580px; padding: 1.5rem; background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-radius: 28px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; justify-content: space-between; }
+/* الإطار الرئيسي */
+.main-card { position: relative; width: 95%; max-width: 420px; height: 90vh; max-height: 750px; padding: 1.5rem; background: var(--card-bg); backdrop-filter: blur(15px); border: 1px solid var(--border-color); border-radius: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow-y: auto; }
+.main-card::-webkit-scrollbar { display: none; }
 
-.stage { display: none; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 50px; }
+.stage { display: none; flex-direction: column; gap: 15px; padding-bottom: 60px; animation: fadeIn 0.4s ease; }
 .stage.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
+/* الإعلانات */
+.ad-banner { background: linear-gradient(90deg, rgba(255,42,109,0.1), rgba(5,217,232,0.1)); border: 1px dashed var(--secondary); padding: 15px; border-radius: 12px; position: relative; text-align: center; font-size: 0.85rem; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
+.ad-banner:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(5,217,232,0.3); }
+.ad-badge { position: absolute; top: -10px; right: 10px; background: var(--primary); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
+
+/* الهيدر والبروفايل */
 .app-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
 .user-profile { display: flex; align-items: center; gap: 10px; }
 .profile-avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--secondary); }
-.user-info h3 { font-size: 0.95rem; text-align: right; }
-.user-info span { font-size: 0.75rem; color: var(--secondary); display: block; text-align: right; }
+.user-info h3 { font-size: 1rem; }
+.user-info span { font-size: 0.75rem; color: var(--gold); }
+.badge-points { background: rgba(255,183,3,0.1); border: 1px solid var(--gold); color: var(--gold); padding: 5px 12px; border-radius: 20px; font-weight: bold; }
 
-.badge-points { background: rgba(255, 183, 3, 0.15); border: 1px solid var(--gold); color: var(--gold); padding: 4px 12px; border-radius: 50px; font-weight: bold; }
+/* الأزرار */
+.action-buttons { display: flex; gap: 10px; }
+.btn-primary, .btn-secondary { flex: 1; padding: 10px; border: none; border-radius: 12px; color: #fff; font-weight: bold; cursor: pointer; transition: 0.3s; }
+.btn-primary { background: linear-gradient(45deg, var(--primary), #ff6a88); box-shadow: 0 5px 15px rgba(255,42,109,0.3); }
+.btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); }
+.btn-primary:hover { transform: translateY(-2px); }
 
+/* الألعاب */
 .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.game-card { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); padding: 15px 5px; border-radius: 16px; text-align: center; cursor: pointer; transition: 0.3s; }
-.game-card:hover { border-color: var(--secondary); transform: translateY(-3px); }
+.game-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 15px 5px; border-radius: 15px; text-align: center; cursor: pointer; transition: 0.3s; }
+.game-card:hover { border-color: var(--secondary); background: rgba(5,217,232,0.1); }
 .g-icon { font-size: 2rem; margin-bottom: 5px; }
 
-.btn-primary { background: linear-gradient(45deg, var(--secondary), #0077ff); border: none; color: #fff; padding: 10px 18px; font-size: 0.9rem; font-weight: 700; border-radius: 50px; cursor: pointer; box-shadow: 0 10px 20px rgba(5, 217, 232, 0.3); }
-.btn-back { background: none; border: none; color: #fff; cursor: pointer; font-size: 0.9rem; text-align: right; }
+/* ساحة اللعب العامة */
+.board-area { min-height: 300px; display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 20px; }
 
-.bet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.btn-bet { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: #fff; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer; }
-.btn-bet.active { border-color: var(--primary); background: rgba(255, 42, 109, 0.2); }
-
-.bottom-nav { position: absolute; bottom: 15px; left: 5%; right: 5%; height: 50px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color); border-radius: 25px; display: flex; justify-content: space-around; align-items: center; }
-.nav-btn { font-size: 0.85rem; cursor: pointer; color: #aaa; }
-.nav-btn.active { color: var(--secondary); font-weight: bold; }
-
-/* ساحة اللعب */
-.board-area { min-height: 250px; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+/* XO */
 .xo-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 220px; height: 220px; }
-.xo-cell { background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: bold; cursor: pointer; }
+.xo-cell { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; font-weight: bold; cursor: pointer; }
 
-.shop-item, .task-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 8px; }
+/* RPS & Soccer */
+.game-btn { font-size: 2.5rem; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid var(--secondary); border-radius: 15px; cursor: pointer; margin: 5px; }
+.game-result { font-size: 1.2rem; font-weight: bold; color: var(--gold); text-align: center; margin-top: 15px; }
+
+/* القوائم والمتجر */
+.shop-item, .task-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); }
+.bottom-nav { position: absolute; bottom: 10px; left: 10px; right: 10px; height: 60px; background: rgba(10,10,15,0.9); border: 1px solid var(--border-color); border-radius: 20px; display: flex; justify-content: space-around; align-items: center; z-index: 100; backdrop-filter: blur(10px); }
+.nav-btn { font-size: 0.8rem; cursor: pointer; color: #888; display: flex; flex-direction: column; align-items: center; }
+.nav-btn.active { color: var(--secondary); font-weight: bold; text-shadow: 0 0 10px var(--secondary); }
