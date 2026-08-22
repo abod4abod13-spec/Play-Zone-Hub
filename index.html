@@ -13,8 +13,8 @@
     <div class="glow-orb orb-2"></div>
 
     <div class="main-card">
-        <!-- زر المطور السري -->
-        <button class="btn-back admin-btn" onclick="openAdminPanel()">⚙️</button>
+        <!-- زر المطور المباشر -->
+        <button class="btn-back admin-btn" title="لوحة التحكم" onclick="openAdminPanel()">⚙️</button>
 
         <div class="ad-banner" onclick="alert('🌟 للاستفسار عن الإعلانات تواصل مع الإدارة!')">
             <span class="ad-badge">إعلان ممول</span>
@@ -90,7 +90,7 @@
             </div>
         </section>
 
-        <!-- لوحة التحكم (المطور) -->
+        <!-- لوحة التحكم (الإدارة) -->
         <section id="sec-admin" class="stage">
             <h2 class="target-name" style="color:var(--primary);">🛡️ لوحة تحكم الإدارة</h2>
             <div class="admin-controls">
@@ -98,17 +98,17 @@
                 <button class="btn-secondary" style="width:100%; margin-bottom:20px;" onclick="setDailyRewardAmount()">💰 تعديل مبلغ الهدية اليومية</button>
             </div>
             
-            <h3 style="font-size:1rem; margin-bottom:10px;">👥 إدارة اللاعبين (محاكاة)</h3>
+            <h3 style="font-size:1rem; margin-bottom:10px;">👥 إدارة اللاعبين</h3>
             <div class="shop-list" id="admin-users-list">
-                <!-- يتم توليد المستخدمين برمجياً -->
+                <!-- يتم توليد اللاعبين برمجياً -->
             </div>
         </section>
 
-        <!-- شريط التنقل السفلي -->
+        <!-- شريط التنقل السفلي المطور بالكامل -->
         <nav class="bottom-nav">
             <div class="nav-btn active" onclick="switchStage('sec-home')">🎮 الرئيسية</div>
             <div class="nav-btn" onclick="switchStage('sec-shop')">🛍️ المتجر</div>
-            <div class="nav-btn" onclick="alert('🏆 سيتم ربط المتصدرين بقاعدة البيانات قريباً!')">🏆 الرانك</div>
+            <div class="nav-btn" onclick="openAdminPanel()">⚙️ الإدارة</div>
         </nav>
     </div>
 
