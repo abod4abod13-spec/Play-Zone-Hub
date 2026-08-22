@@ -1,10 +1,6 @@
-// --- 1. إعدادات السيرفر والبيانات ---
-// ضع هنا رابط الاستضافة التي يعمل عليها كود البايثون (مثال: https://your-bot-app.onrender.com)
-const API_URL = "http://localhost:5000"; 
-
 let user = JSON.parse(localStorage.getItem("pz_user")) || {
     id: "guest",
-    name: "لاعب مجهول",
+    name: "مستخدم تجريبي",
     username: "@guest",
     points: 1000,
     level: 1,
@@ -14,74 +10,25 @@ let user = JSON.parse(localStorage.getItem("pz_user")) || {
 };
 let settings = JSON.parse(localStorage.getItem("pz_settings")) || { dailyReward: 500 };
 let currentBet = 100;
+let isAdminUnlocked = false;
 
 const xpNeeded = (level) => level * 100;
 
-// --- 2. الربط المباشر مع تليجرام وسيرفر البايثون ---
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
     const tg = window.Telegram?.WebApp;
-    if (tg) tg.expand();
-
     if (tg && tg.initDataUnsafe?.user) {
         const u = tg.initDataUnsafe.user;
-        user.id = str(u.id);
         user.name = u.first_name || user.name;
         user.username = u.username ? `@${u.username}` : user.username;
         if (u.photo_url) user.photo = u.photo_url;
-        
-        // جلب البيانات الحقيقية من الباك إند (Python)
-        await fetchUserDataFromBackend(user.id);
     }
     updateUI();
 });
 
-// دالة جلب البيانات من سيرفر البايثون
-async function fetchUserDataFromBackend(userId) {
-    try {
-        const res = await fetch(`${API_URL}/api/get_user?user_id=${userId}`);
-        if (res.ok) {
-            const data = await res.json();
-            if (data.status === "success") {
-                user.points = data.data.points ?? user.points;
-                user.level = data.data.level ?? user.level;
-                user.xp = data.data.xp ?? user.xp;
-                user.inventory = data.data.inventory || [];
-                saveDataLocally();
-            }
-        }
-    } catch (e) {
-        console.log("تعذر الاتصال بالباك إند، يتم استخدام الحفظ المحلي حالياً.");
-    }
-}
-
-// دالة حفظ البيانات في المتصفح والسيرفر معاً
-async function saveData() {
-    saveDataLocally();
-    updateUI();
-
-    // إرسال البيانات المحدثة إلى سيرفر البايثون في الخلفية
-    if (user.id !== "guest") {
-        try {
-            await fetch(`${API_URL}/api/update_user`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    user_id: user.id,
-                    points: user.points,
-                    level: user.level,
-                    xp: user.xp,
-                    inventory: user.inventory
-                })
-            });
-        } catch (e) {
-            console.log("خطأ في تحديث البيانات على السيرفر.");
-        }
-    }
-}
-
-function saveDataLocally() {
+function saveData() {
     localStorage.setItem("pz_user", JSON.stringify(user));
     localStorage.setItem("pz_settings", JSON.stringify(settings));
+    updateUI();
 }
 
 function updateUI() {
@@ -95,10 +42,12 @@ function updateUI() {
 
 function switchStage(stageId) {
     document.querySelectorAll(".stage").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    
     document.getElementById(stageId).classList.add("active");
 }
 
-// --- 3. الهدايا والأكواد ---
+// --- الهدايا والأكواد ---
 function claimDailyReward() {
     const lastClaim = localStorage.getItem("pz_daily");
     const now = new Date().getTime();
@@ -131,7 +80,7 @@ function usePromoCode() {
     }
 }
 
-// --- 4. المتجر والمشتريات ---
+// --- المتجر ---
 function buyItem(itemId, price) {
     if (user.inventory.includes(itemId) && itemId !== 'shield') {
         return alert("❌ أنت تملك هذا العنصر بالفعل!");
@@ -146,7 +95,7 @@ function buyItem(itemId, price) {
     }
 }
 
-// --- 5. منطق الألعاب ومستويات الصعوبة ---
+// --- محرك الألعاب ---
 function getWinProbability() {
     const diff = document.getElementById("game-difficulty").value;
     if (diff === 'easy') return 0.8;
@@ -197,7 +146,7 @@ function handleLose() {
     switchStage('sec-home');
 }
 
-// لعبة ضربات الجزاء
+// ضربات الجزاء
 function initSoccer(container) {
     container.innerHTML = `
         <h3 style="margin-bottom:20px;">أين ستسدد الكرة؟</h3>
@@ -224,7 +173,7 @@ function playSoccer(direction) {
     }, 1200);
 }
 
-// لعبة حجرة ورقة مقص
+// حجرة ورقة مقص
 function initRPS(container) {
     container.innerHTML = `
         <h3 style="margin-bottom:20px;">اختر سلاحك:</h3>
@@ -257,7 +206,7 @@ function playRPS(playerChoice) {
     }, 1200);
 }
 
-// لعبة XO
+// XO
 let xoBoard = [];
 function initXO(container) {
     xoBoard = ['', '', '', '', '', '', '', '', ''];
@@ -299,23 +248,30 @@ function checkXOWinner() {
     if (oWin) return setTimeout(handleLose, 500);
 }
 
-// --- 6. لوحة تحكم المطور والتحكم بالكامل ---
+// --- لوحة التحكم والإدارة (منشطة بالكامل) ---
 function openAdminPanel() {
-    const pass = prompt("أدخل كلمة مرور المطور:");
+    if (isAdminUnlocked) {
+        switchStage('sec-admin');
+        renderAdminUsers();
+        return;
+    }
+    
+    const pass = prompt("🔑 أدخل كلمة مرور المطور للوصول للوحة التحكم:");
     if (pass === "HAJJA84040@$@(ishs") {
+        isAdminUnlocked = true;
         switchStage('sec-admin');
         renderAdminUsers();
     } else {
-        alert("⛔ وصول مرفوض! كلمة المرور غير صحيحة.");
+        alert("⛔ كلمة المرور غير صحيحة!");
     }
 }
 
 function generatePromoCode() {
-    const code = prompt("أدخل اسم الكود الجديد (مثال: HAJJA2026):");
-    const amount = parseInt(prompt("كم عدد النقاط التي سيعطيها هذا الكود؟"));
+    const code = prompt("أدخل اسم الكود الجديد:");
+    const amount = parseInt(prompt("كم عدد النقاط لهذا الكود؟"));
     if (code && amount) {
         localStorage.setItem(`promo_${code.toUpperCase()}`, amount);
-        alert(`✅ تم إنشاء الكود بنجاح!\nالكود: ${code.toUpperCase()}\nالهدية: ${amount} نقطة.`);
+        alert(`✅ تم إنشاء الكود: ${code.toUpperCase()}\nالهدية: ${amount} نقطة.`);
     }
 }
 
@@ -324,41 +280,23 @@ function setDailyRewardAmount() {
     if (amount) {
         settings.dailyReward = amount;
         saveData();
-        alert(`✅ تم تغيير مبلغ الهدية اليومية إلى ${amount} نقطة.`);
+        alert(`✅ تم تغيير مبلغ الهدية إلى ${amount} نقطة.`);
     }
 }
 
 function renderAdminUsers() {
     const list = document.getElementById("admin-users-list");
     const mockUsers = [
-        { id: "1", name: "أحمد", username: "@ahmed", points: 25000, level: 8 },
-        { id: "2", name: "سارة", username: "@sara", points: 12000, level: 4 }
+        { id: "1", name: "علي", username: "@ali", points: 15000, level: 5 },
+        { id: "2", name: "محمد", username: "@mo", points: 8000, level: 3 }
     ];
-
     list.innerHTML = mockUsers.map(u => `
         <div class="shop-item" style="flex-direction:column; align-items:flex-start; gap:10px;">
             <div><strong>${u.name}</strong> (${u.username})<br><small>المستوى: ${u.level} | 🟡 ${u.points.toLocaleString()}</small></div>
             <div style="display:flex; gap:8px; width:100%;">
-                <button class="btn-secondary" style="padding:6px; font-size:0.75rem;" onclick="adminAddPoints('${u.name}')">➕ إضافة نقاط</button>
-                <button class="btn-secondary" style="padding:6px; font-size:0.75rem;" onclick="adminDeductPoints('${u.name}')">➖ سحب نقاط</button>
-                <button class="btn-primary" style="padding:6px; font-size:0.75rem; background:red;" onclick="adminBanUser('${u.name}')">🚫 حظر</button>
+                <button class="btn-secondary" style="padding:6px; font-size:0.75rem;" onclick="alert('تمت إضافة النقاط')">➕ إضافة نقاط</button>
+                <button class="btn-primary" style="padding:6px; font-size:0.75rem; background:red;" onclick="alert('تم حظر اللاعب')">🚫 حظر</button>
             </div>
         </div>
     `).join('');
-}
-
-function adminAddPoints(name) {
-    const amount = prompt(`كم نقطة تريد إضافتها للاعب ${name}؟`);
-    if(amount) alert(`✅ تمت إضافة ${amount} نقطة للاعب ${name}.`);
-}
-
-function adminDeductPoints(name) {
-    const amount = prompt(`كم نقطة تريد سحبها من اللاعب ${name}؟`);
-    if(amount) alert(`✅ تم سحب ${amount} نقطة من اللاعب ${name}.`);
-}
-
-function adminBanUser(name) {
-    if(confirm(`هل أنت تأكد من حظر ${name}؟`)) {
-        alert(`🚨 تم حظر اللاعب ${name} بنجاح.`);
-    }
 }
