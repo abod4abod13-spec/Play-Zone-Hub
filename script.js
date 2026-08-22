@@ -1,26 +1,87 @@
-// --- 1. تهيئة النظام والحفظ المحلي ---
+// --- 1. إعدادات السيرفر والبيانات ---
+// ضع هنا رابط الاستضافة التي يعمل عليها كود البايثون (مثال: https://your-bot-app.onrender.com)
+const API_URL = "http://localhost:5000"; 
+
 let user = JSON.parse(localStorage.getItem("pz_user")) || {
-    name: "زائر", username: "@guest", points: 1000, level: 1, xp: 0, photo: "https://via.placeholder.com/50", inventory: []
+    id: "guest",
+    name: "لاعب مجهول",
+    username: "@guest",
+    points: 1000,
+    level: 1,
+    xp: 0,
+    photo: "https://via.placeholder.com/50",
+    inventory: []
 };
 let settings = JSON.parse(localStorage.getItem("pz_settings")) || { dailyReward: 500 };
 let currentBet = 100;
 
-document.addEventListener("DOMContentLoaded", () => {
+const xpNeeded = (level) => level * 100;
+
+// --- 2. الربط المباشر مع تليجرام وسيرفر البايثون ---
+document.addEventListener("DOMContentLoaded", async () => {
     const tg = window.Telegram?.WebApp;
+    if (tg) tg.expand();
+
     if (tg && tg.initDataUnsafe?.user) {
         const u = tg.initDataUnsafe.user;
-        if(user.name === "زائر") user.name = u.first_name;
-        if(u.photo_url) user.photo = u.photo_url;
+        user.id = str(u.id);
+        user.name = u.first_name || user.name;
+        user.username = u.username ? `@${u.username}` : user.username;
+        if (u.photo_url) user.photo = u.photo_url;
+        
+        // جلب البيانات الحقيقية من الباك إند (Python)
+        await fetchUserDataFromBackend(user.id);
     }
     updateUI();
 });
 
-const xpNeeded = (level) => level * 100;
+// دالة جلب البيانات من سيرفر البايثون
+async function fetchUserDataFromBackend(userId) {
+    try {
+        const res = await fetch(`${API_URL}/api/get_user?user_id=${userId}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.status === "success") {
+                user.points = data.data.points ?? user.points;
+                user.level = data.data.level ?? user.level;
+                user.xp = data.data.xp ?? user.xp;
+                user.inventory = data.data.inventory || [];
+                saveDataLocally();
+            }
+        }
+    } catch (e) {
+        console.log("تعذر الاتصال بالباك إند، يتم استخدام الحفظ المحلي حالياً.");
+    }
+}
 
-function saveData() {
+// دالة حفظ البيانات في المتصفح والسيرفر معاً
+async function saveData() {
+    saveDataLocally();
+    updateUI();
+
+    // إرسال البيانات المحدثة إلى سيرفر البايثون في الخلفية
+    if (user.id !== "guest") {
+        try {
+            await fetch(`${API_URL}/api/update_user`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: user.id,
+                    points: user.points,
+                    level: user.level,
+                    xp: user.xp,
+                    inventory: user.inventory
+                })
+            });
+        } catch (e) {
+            console.log("خطأ في تحديث البيانات على السيرفر.");
+        }
+    }
+}
+
+function saveDataLocally() {
     localStorage.setItem("pz_user", JSON.stringify(user));
     localStorage.setItem("pz_settings", JSON.stringify(settings));
-    updateUI();
 }
 
 function updateUI() {
@@ -29,7 +90,7 @@ function updateUI() {
     document.getElementById("u-name").style.color = isVip ? "var(--gold)" : "#fff";
     document.getElementById("u-points").textContent = user.points.toLocaleString();
     document.getElementById("u-level").textContent = `المستوى: ${user.level} (${user.xp}/${xpNeeded(user.level)} XP)`;
-    document.getElementById("u-photo").src = user.photo;
+    if (document.getElementById("u-photo")) document.getElementById("u-photo").src = user.photo;
 }
 
 function switchStage(stageId) {
@@ -37,7 +98,7 @@ function switchStage(stageId) {
     document.getElementById(stageId).classList.add("active");
 }
 
-// --- 2. الهدايا والأكواد المتصلة بلوحة التحكم ---
+// --- 3. الهدايا والأكواد ---
 function claimDailyReward() {
     const lastClaim = localStorage.getItem("pz_daily");
     const now = new Date().getTime();
@@ -57,12 +118,12 @@ function usePromoCode() {
     const code = prompt("أدخل كود الهدية:");
     if (!code) return;
     
-    const codeValue = localStorage.getItem(`promo_${code}`);
+    const codeValue = localStorage.getItem(`promo_${code.toUpperCase()}`);
     if (codeValue) {
-        if(localStorage.getItem(`used_promo_${code}`)) return alert("❌ تم استخدام هذا الكود مسبقاً!");
+        if(localStorage.getItem(`used_promo_${code.toUpperCase()}`)) return alert("❌ تم استخدام هذا الكود مسبقاً!");
         const amount = parseInt(codeValue);
         user.points += amount;
-        localStorage.setItem(`used_promo_${code}`, "true");
+        localStorage.setItem(`used_promo_${code.toUpperCase()}`, "true");
         saveData();
         alert(`🎟️ كود صحيح! تمت إضافة ${amount} نقطة.`);
     } else {
@@ -70,7 +131,7 @@ function usePromoCode() {
     }
 }
 
-// --- 3. المتجر ---
+// --- 4. المتجر والمشتريات ---
 function buyItem(itemId, price) {
     if (user.inventory.includes(itemId) && itemId !== 'shield') {
         return alert("❌ أنت تملك هذا العنصر بالفعل!");
@@ -85,7 +146,7 @@ function buyItem(itemId, price) {
     }
 }
 
-// --- 4. محرك الألعاب والصعوبة ---
+// --- 5. منطق الألعاب ومستويات الصعوبة ---
 function getWinProbability() {
     const diff = document.getElementById("game-difficulty").value;
     if (diff === 'easy') return 0.8;
@@ -126,9 +187,9 @@ function handleWin(multiplier = 2) {
 function handleLose() {
     if (user.inventory.includes('shield')) {
         alert("🛡️ درع الخسارة حماك من فقدان النقاط! تم استرجاع رهانك.");
-        user.points += currentBet; // استرجاع الرهان
+        user.points += currentBet;
         const index = user.inventory.indexOf('shield');
-        if (index > -1) user.inventory.splice(index, 1); // استهلاك الدرع
+        if (index > -1) user.inventory.splice(index, 1);
         saveData();
     } else {
         alert("💀 خسرت الجولة! حظاً أوفر.");
@@ -189,7 +250,7 @@ function playRPS(playerChoice) {
             alert("🤝 تعادل! تم استرجاع نقاطك.");
             switchStage('sec-home');
         } else {
-            const isWin = Math.random() < getWinProbability() ? true : false;
+            const isWin = Math.random() < getWinProbability();
             if (isWin) handleWin(2);
             else handleLose();
         }
@@ -238,7 +299,7 @@ function checkXOWinner() {
     if (oWin) return setTimeout(handleLose, 500);
 }
 
-// --- 5. لوحة تحكم المطور الإدارية ---
+// --- 6. لوحة تحكم المطور والتحكم بالكامل ---
 function openAdminPanel() {
     const pass = prompt("أدخل كلمة مرور المطور:");
     if (pass === "HAJJA84040@$@(ishs") {
@@ -250,7 +311,7 @@ function openAdminPanel() {
 }
 
 function generatePromoCode() {
-    const code = prompt("أدخل اسم الكود الجديد (مثال: FREE2026):");
+    const code = prompt("أدخل اسم الكود الجديد (مثال: HAJJA2026):");
     const amount = parseInt(prompt("كم عدد النقاط التي سيعطيها هذا الكود؟"));
     if (code && amount) {
         localStorage.setItem(`promo_${code.toUpperCase()}`, amount);
@@ -270,16 +331,34 @@ function setDailyRewardAmount() {
 function renderAdminUsers() {
     const list = document.getElementById("admin-users-list");
     const mockUsers = [
-        { id: 1, name: "Ali", points: 15000, level: 5 },
-        { id: 2, name: "Sara", points: 8000, level: 3 }
+        { id: "1", name: "أحمد", username: "@ahmed", points: 25000, level: 8 },
+        { id: "2", name: "سارة", username: "@sara", points: 12000, level: 4 }
     ];
+
     list.innerHTML = mockUsers.map(u => `
         <div class="shop-item" style="flex-direction:column; align-items:flex-start; gap:10px;">
-            <div><strong>${u.name}</strong> - المستوي: ${u.level} | 🟡 ${u.points}</div>
-            <div style="display:flex; gap:10px; width:100%;">
-                <button class="btn-primary" style="padding:8px; font-size:0.8rem;" onclick="alert('تم سحب 1000 نقطة من ${u.name}')">سحب نقاط</button>
-                <button class="btn-primary" style="padding:8px; font-size:0.8rem; background:red;" onclick="alert('تم حظر اللاعب ${u.name} 🚫')">حظر</button>
+            <div><strong>${u.name}</strong> (${u.username})<br><small>المستوى: ${u.level} | 🟡 ${u.points.toLocaleString()}</small></div>
+            <div style="display:flex; gap:8px; width:100%;">
+                <button class="btn-secondary" style="padding:6px; font-size:0.75rem;" onclick="adminAddPoints('${u.name}')">➕ إضافة نقاط</button>
+                <button class="btn-secondary" style="padding:6px; font-size:0.75rem;" onclick="adminDeductPoints('${u.name}')">➖ سحب نقاط</button>
+                <button class="btn-primary" style="padding:6px; font-size:0.75rem; background:red;" onclick="adminBanUser('${u.name}')">🚫 حظر</button>
             </div>
         </div>
     `).join('');
+}
+
+function adminAddPoints(name) {
+    const amount = prompt(`كم نقطة تريد إضافتها للاعب ${name}؟`);
+    if(amount) alert(`✅ تمت إضافة ${amount} نقطة للاعب ${name}.`);
+}
+
+function adminDeductPoints(name) {
+    const amount = prompt(`كم نقطة تريد سحبها من اللاعب ${name}؟`);
+    if(amount) alert(`✅ تم سحب ${amount} نقطة من اللاعب ${name}.`);
+}
+
+function adminBanUser(name) {
+    if(confirm(`هل أنت تأكد من حظر ${name}؟`)) {
+        alert(`🚨 تم حظر اللاعب ${name} بنجاح.`);
+    }
 }
